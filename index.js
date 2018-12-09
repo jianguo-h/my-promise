@@ -28,14 +28,18 @@ MyPromise.prototype.then = function(onFullfilled, onRejected) {
 }
 
 function handleResolved(promise, onFullfilled, onRejected, _resolve, _reject) {
-  var res = undefined;
-  var cb = promise.state === 'resolved' ? onFullfilled : onRejected;
-  if(typeof cb !== 'function') {
-    cb = function(val) { return val; }
-  }
   setTimeout(function() {
-    cb = promise.state === 'resolved' ? onFullfilled : onRejected;
-    cb = typeof cb === 'function' ? cb : function(val) { return val; }
+    var res = undefined;
+    var cb = promise.state === 'resolved' ? onFullfilled : onRejected;
+    if(typeof cb !== 'function') {
+      if(promise.state === 'resolved') {
+        _resolve(promise.value);
+      }
+      else {
+        _reject(promise.value);
+      }
+      return;
+    }
     try {
       res = cb(promise.value);
       _resolve(res);
