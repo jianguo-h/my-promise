@@ -91,7 +91,6 @@ MyPromise.race = function(promiseArr) {
 
 function handleResolved(promise, onFullfilled, onRejected, _resolve, _reject) {
   setTimeout(function() {
-    var res = undefined;
     var cb = promise.state === 'resolved' ? onFullfilled : onRejected;
     if(typeof cb !== 'function') {
       if(promise.state === 'resolved') {
@@ -103,7 +102,7 @@ function handleResolved(promise, onFullfilled, onRejected, _resolve, _reject) {
       return;
     }
     try {
-      res = cb(promise.value);
+      var res = cb(promise.value);
       _resolve(res);
     }
     catch(err) {
@@ -166,4 +165,8 @@ function handlePromise(promise, value) {
     }
   }
   return true;
+}
+
+if(typeof window !== 'undefined') {
+  window['MyPromise'] = MyPromise;
 }
