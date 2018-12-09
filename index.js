@@ -12,12 +12,23 @@ function MyPromise(fn) {
 }
 
 MyPromise.prototype.then = function(onFullfilled, onRejected) {
+  var self = this;
   var res = undefined;
   var cb = this.state === 'resolved' ? onFullfilled : onRejected;
   if(typeof cb !== 'function') {
     cb = function(val) { return val; }
   }
-  res = cb(this.value);
+  var newPromise = new MyPromise(function(_resolve, _reject) {
+    try {
+      res = cb(self.value);
+      _resolve(res);
+    }
+    catch(err) {
+      _reject(err);
+    }
+  });
+
+  return newPromise;
 }
 
 // 执行 fn 方法

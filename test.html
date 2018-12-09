@@ -8,12 +8,18 @@
   <script src='./index.js'></script>
   <script>
     new MyPromise((resolve, reject) => {
-      // resolve('resolved');
-      reject('rejected');
+      resolve('resolved');
+      // reject('rejected');
     }).then(res => {
       console.log('>>> res', res);
-    }, err =>  {
+      return 'res1';
+    }, err => {
       console.log('>>> err', err);
+      return 'err1';
+    }).then(res2 => {
+      console.log('>>> res2', res2);
+    }, err2 => {
+      console.log('>>> err2', err2);
     });
   </script>
 </body>
