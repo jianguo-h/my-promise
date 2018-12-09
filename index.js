@@ -14,40 +14,36 @@ function MyPromise(fn) {
 
 MyPromise.prototype.then = function(onFullfilled, onRejected) {
   var self = this;
-  var res = undefined;
-  var cb = this.state === 'resolved' ? onFullfilled : onRejected;
-  if(typeof cb !== 'function') {
-    cb = function(val) { return val; }
-  }
   var newPromise = new MyPromise(function(_resolve, _reject) {
     if(self.state === 'pending') {
       self.callbacks.push(function() {
-        setTimeout(function() {
-          cb = self.state === 'resolved' ? onFullfilled : onRejected;
-          cb = typeof cb === 'function' ? cb : function(val) { return val; }
-          try {
-            res = cb(self.value);
-            _resolve(res);
-          }
-          catch(err) {
-            _reject(err);
-          }
-        });
+        handleResolved(self, onFullfilled, onRejected, _resolve, _reject);
       });
       return;
     }
-    setTimeout(function() {
-      try {
-        res = cb(self.value);
-        _resolve(res);
-      }
-      catch(err) {
-        _reject(err);
-      }
-    });
+    handleResolved(self, onFullfilled, onRejected, _resolve, _reject);
   });
 
   return newPromise;
+}
+
+function handleResolved(promise, onFullfilled, onRejected, _resolve, _reject) {
+  var res = undefined;
+  var cb = promise.state === 'resolved' ? onFullfilled : onRejected;
+  if(typeof cb !== 'function') {
+    cb = function(val) { return val; }
+  }
+  setTimeout(function() {
+    cb = promise.state === 'resolved' ? onFullfilled : onRejected;
+    cb = typeof cb === 'function' ? cb : function(val) { return val; }
+    try {
+      res = cb(promise.value);
+      _resolve(res);
+    }
+    catch(err) {
+      _reject(err);
+    }
+  });
 }
 
 // 执行 fn 方法
