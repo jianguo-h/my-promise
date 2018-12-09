@@ -27,6 +27,8 @@
       console.log('>>> res2', res2);
     }, err2 => {
       console.log('>>> err2', err2);
+    }).finally(() => {
+      console.log('>>> finally')
     });
     
     // then第一个方法返回的是MyPromise实例

@@ -27,6 +27,68 @@ MyPromise.prototype.then = function(onFullfilled, onRejected) {
   return newPromise;
 }
 
+MyPromise.prototype.catch = function(onRejected) {
+  return this.then(null, onRejected);
+}
+
+MyPromise.prototype.finally = function(cb) {
+  return this.then(
+    function(value) {
+      return MyPromise.resolve(cb()).then(function() {
+        return value;
+      });
+    },
+    function(err) {
+      return MyPromise.resolve(cb()).then(function() {
+        throw err;
+      });
+    }
+  );
+}
+
+MyPromise.resolve = function(val) {
+  return new MyPromise(function(resolve, reject) {
+    resolve(val);
+  });
+}
+
+MyPromise.reject = function(err) {
+  return new MyPromise(function(resolve, reject) {
+    reject(err);
+  });
+}
+
+// 参数可以不是数组，但必须具有 Iterator 接口, 同时里面的值可能也不是promise实例
+MyPromise.all = function(promiseArr) {
+  var args = [].slice.call(promiseArr);
+
+  return new MyPromise(function(resolve, reject) {
+    var arr = [];
+    var resolveCount = 0;
+    var argsLen = args.length;
+    for(var i = 0; i < argsLen; i++) {
+      handle(i, args[i]);
+    }
+    function handle(index, val) {
+      MyPromise.resolve(val).then(function(value) {
+        arr[index] = value;
+        if(++resolveCount === argsLen) {
+          resolve(arr);
+        }
+      }, reject);
+    }  
+  });
+}
+
+MyPromise.race = function(promiseArr) {
+  var args = [].slice.call(promiseArr);
+  return new MyPromise(function(resolve, reject) {
+    for(var i = 0; i < args.length; i++) {
+      MyPromise.resolve(args[i]).then(resolve, reject);
+    }
+  });
+}
+
 function handleResolved(promise, onFullfilled, onRejected, _resolve, _reject) {
   setTimeout(function() {
     var res = undefined;
