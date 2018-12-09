@@ -5,7 +5,7 @@ function MyPromise(fn) {
   if (typeof fn !== 'function') {
     throw new TypeError('MyPromise constructor argument is not a function');
   }
-  this.state = 'pending';  // 出初始化状态
+  this.state = 'pending';  // 初始化状态
   this.value = undefined;  // 初始化一个值, 用来存储resolve或者reject的值
   // 执行 fn 方法
   executeFn(fn, this);
@@ -19,6 +19,7 @@ MyPromise.prototype.then = function(onFullfilled, onRejected) {
     cb = function(val) { return val; }
   }
   var newPromise = new MyPromise(function(_resolve, _reject) {
+    if(self.state === 'pending') return;
     try {
       res = cb(self.value);
       _resolve(res);
@@ -54,6 +55,8 @@ function executeFn(fn, promise) {
 }
 
 function resolve(promise, value) {
+  if(!handlePromise(promise, value)) return;
+
   promise.state = 'resolved';
   promise.value = value;
 }
@@ -61,4 +64,20 @@ function resolve(promise, value) {
 function reject(promise, error) {
   promise.state = 'rejected';
   promise.value = error;
+}
+
+// 用来处理返回值或者resolve的参数是promise的情况, 最后的返回值起个标识作用
+function handlePromise(promise, value) {
+  if(value === promise) {
+    reject(promise, 'A promise cannot be resolved with itself');
+    return;
+  }
+  if(value && (typeof value === 'object' || typeof value === 'function')) {
+    var then = value.then;
+    if(typeof then === 'function') {
+      executeFn(then.bind(value), promise);
+      return;
+    }
+  }
+  return true;
 }
