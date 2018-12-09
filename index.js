@@ -7,6 +7,7 @@ function MyPromise(fn) {
   }
   this.state = 'pending';  // 初始化状态
   this.value = undefined;  // 初始化一个值, 用来存储resolve或者reject的值
+  this.callbacks = [];     // 存储异步的回调方法
   // 执行 fn 方法
   executeFn(fn, this);
 }
@@ -19,14 +20,31 @@ MyPromise.prototype.then = function(onFullfilled, onRejected) {
     cb = function(val) { return val; }
   }
   var newPromise = new MyPromise(function(_resolve, _reject) {
-    if(self.state === 'pending') return;
-    try {
-      res = cb(self.value);
-      _resolve(res);
+    if(self.state === 'pending') {
+      self.callbacks.push(function() {
+        setTimeout(function() {
+          cb = self.state === 'resolved' ? onFullfilled : onRejected;
+          cb = typeof cb === 'function' ? cb : function(val) { return val; }
+          try {
+            res = cb(self.value);
+            _resolve(res);
+          }
+          catch(err) {
+            _reject(err);
+          }
+        });
+      });
+      return;
     }
-    catch(err) {
-      _reject(err);
-    }
+    setTimeout(function() {
+      try {
+        res = cb(self.value);
+        _resolve(res);
+      }
+      catch(err) {
+        _reject(err);
+      }
+    });
   });
 
   return newPromise;
@@ -59,11 +77,17 @@ function resolve(promise, value) {
 
   promise.state = 'resolved';
   promise.value = value;
+  promise.callbacks.forEach(function(cb) {
+    cb();
+  });
 }
 
 function reject(promise, error) {
   promise.state = 'rejected';
   promise.value = error;
+  promise.callbacks.forEach(function(cb) {
+    cb();
+  });
 }
 
 // 用来处理返回值或者resolve的参数是promise的情况, 最后的返回值起个标识作用
